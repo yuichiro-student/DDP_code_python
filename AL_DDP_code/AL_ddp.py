@@ -44,6 +44,7 @@ def evaluate_actual_cost_constraints(x_traj, u_traj,g_con,par_ddp):
 
 def forward_dyn(u_bar,par_dyn,par_ddp):
     x_bar = np.zeros((par_dyn.n_x, par_ddp.N))
+    x_bar[:,0] = par_ddp.x0
     for k in range(par_ddp.N-1):
         x_bar[:,k+1] = par_ddp.f_dyn(x_bar[:,k], u_bar[:,k]);
     return x_bar 
@@ -52,7 +53,7 @@ def update_multipliers(lambda_al, mu, g):
     lambda_new = np.maximum(0, lambda_al + np.multiply(mu,g));
     return lambda_new
 
-def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr):
+def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr, boxQP_flag = True):
 # augmented lagrangian on ddp with exponential barrier functions
 # setting initial inner parameters and costs for unconstrained ddp
 #if smooth flag is true, use smooth approximation of PHR, else, use PHR.
@@ -83,13 +84,13 @@ def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr):
         print('Outer iteration %d ----------------------------------------------' % (j))
         #update cost functions for DDP
         par_ddp_inner.L_cost = lambda x, u,k,grad_bool: total_penalty_cost_L(par_ddp.L_cost, pen_fun,
-                                                                           x, u,k, grad_bool, lambda_al, mu, par_dyn, options_lagr);
+                                                                           x, u,k, grad_bool, lambda_al, mu, par_dyn, options_lagr)
         par_ddp_inner.F_cost = lambda x, grad_bool: total_penalty_cost_F(par_ddp.F_cost, pen_fun, 
-                                                                         x, grad_bool, lambda_al[-1,:], mu[-1,:], par_dyn, options_lagr);
+                                                                         x, grad_bool, lambda_al[-1,:], mu[-1,:], par_dyn, options_lagr)
 
     #solve unconstrained penalty problem
         print('DDP on penalty terms:')
-        x_ddp, u_ddp, S_ddp, _, _, _, norm_costgrad = ddp_ctrl_constrained(u_bar, par_ddp_inner, par_dyn, options_ddp_inner);
+        x_ddp, u_ddp, S_ddp, _, _, _, norm_costgrad = ddp_ctrl_constrained(u_bar, par_ddp_inner, par_dyn, options_ddp_inner, boxQP_flag)
         print('----------------------------')
         G_con, J_actual = evaluate_actual_cost_constraints(x_ddp,u_ddp,g_con,par_ddp)
         G_con_max = G_con.max()

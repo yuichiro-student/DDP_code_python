@@ -10,6 +10,7 @@ sys.path.insert(0,'../../AL_DDP_code')
 
 import numpy as np
 from sympy import *
+import matplotlib.pyplot as plt
 import math
 from ddp_cost import F_cost_quadratic, L_cost_quadratic_xu
 from car_info import par_dyn, grad_dyn_car, dyn_car, graph_car, graph_car_with_noise
@@ -43,9 +44,9 @@ par_dyn = par_dyn(n_x, n_u, dt, lims)
 f_dyn = lambda x, u: dyn_car(x,u,par_dyn)
 grad_dyn = lambda x, u: grad_dyn_car(x,u,par_dyn)
 
-L_cost = lambda x, u,k, grad_bool: L_cost_quadratic_xu(x, u, k, R, K, par_dyn, xf, grad_bool)
+L_cost = lambda x, u,k, grad_bool: L_cost_quadratic_xu(x, u, None, k, R, K, par_dyn, xf, grad_bool)
 F_cost = lambda x, grad_bool: F_cost_quadratic(x, K_final, par_dyn, xf, grad_bool)
-
+# None in L_cost means no trajectory to track
 
 
 
@@ -108,8 +109,9 @@ options_ddp = {'ddp_iter': ddp_iter, 'cost_tol': cost_tol, 'lambda_reg': lambda_
 
 u_bar = np.zeros((n_u,N-1))
 #x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = ddp_ctrl_constrained(u_bar,par_ddp,par_dyn,options_ddp)
-x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr)
-#graph_car(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr)
-cov_noise = 0.01*np.array([[math.pi/3,0.01],[0.01, 1]])
-x_noise, u_noise, num_violation= realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, cov_noise, num_samples = 10)
-graph_car_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr)
+x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar, par_ddp, par_dyn, options_ddp, options_lagr)
+graph_car(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr)
+plt.show()
+#cov_noise = 0.01*np.array([[math.pi/3,0.01],[0.01, 1]])
+#x_noise, u_noise, num_violation= realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, cov_noise, num_samples = 10)
+#graph_car_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr)

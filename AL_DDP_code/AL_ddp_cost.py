@@ -13,13 +13,13 @@ def total_penalty_cost_L(L_cost_fun, penalty_fun, x, u, k, grad_bool, lambda_al,
         L = L_cost + R
         return L
     else:
-        L_c_x, L_c_u, L_c_xu, L_c_uu, L_c_xx = L_cost_fun(x, u,k,grad_bool);
-        R_x, R_u, R_xu, R_uu, R_xx= penalty_fun(x, u,  lambda_al[:,k], mu[:,k], par_dyn, options_lagr, grad_bool);
-        L_x = L_c_x + R_x;
-        L_u = L_c_u + R_u;
-        L_xu = L_c_xu + R_xu;
-        L_uu = L_c_uu + R_uu;
-        L_xx = L_c_xx + R_xx;
+        L_c_x, L_c_u, L_c_xu, L_c_uu, L_c_xx = L_cost_fun(x, u, k, grad_bool)
+        R_x, R_u, R_xu, R_uu, R_xx= penalty_fun(x, u,  lambda_al[:, k], mu[:, k], par_dyn, options_lagr, grad_bool)
+        L_x = L_c_x + R_x
+        L_u = L_c_u + R_u
+        L_xu = L_c_xu + R_xu
+        L_uu = L_c_uu + R_uu
+        L_xx = L_c_xx + R_xx
         return L_x, L_u, L_xu, L_uu, L_xx         
         
 def total_penalty_cost_F(F_cost_fun, penalty_fun, x, grad_bool, lambda_al, mu, par_dyn, options_lagr):

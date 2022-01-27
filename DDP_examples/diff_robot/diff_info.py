@@ -89,7 +89,7 @@ def graph_diff(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr):
     plot_target_and_initial_pnt(x, y, par_ddp, ax1,sz)  
     if options_lagr:
         plot_obs(options_lagr, ax1)
-    plot_trj(x, y, theta, par_ddp, ax1, sz,'blue')
+    plot_trj(x, y, theta, par_ddp, ax1, sz,'blue', 2)
     ax1.set_aspect('equal', 'box')
     utime = par_dyn.dt*np.linspace(0,N-2,N-1)#0 to N-2
     plt.figure()
@@ -121,33 +121,24 @@ def graph_diff_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr):
     STD = 3 #scaling paramter of normal standard div
     conf = 2*norm.cdf(STD)-1 #double tail
     scale = chi2.ppf(conf, df=2)
-    #averaging ove num_of_trj to get sequence of mu
+    # averaging ove num_of_trj to get sequence of mu
     Mu = np.mean(x_noise[0:2,:,:], axis = 2)
-    #get state trajectory with noise at each time step
+    # get state trajectory with noise at each time step
     t = np.linspace( 0 , 2 * np.pi , 150 )
     for k in range(N):
         x_k = x_noise[0:2,k,:].copy() #nx(only pos) by num_trj
         cov = np.asarray(np.cov(x_k))
-        D,V = np.linalg.eig(cov*scale);# d eigenvalue, v is eigen matrix
+        D,V = np.linalg.eig(cov*scale) # d eigenvalue, v is eigen matrix
         order = np.flip(np.argsort(D)) #large to small
         D = np.diag(D)
         V = V[:,order]
         VV = V@np.sqrt(D)
-        #D = diag(D);
-        #V = V(:, order);
-        #e = [cos(t) ; sin(t)];        %# unit circle
-        #VV = V*sqrt(D);               %# scale eigenvectors
         e = np.array([np.cos(t),np.sin(t)])
         Mu_k = Mu[:,k]
         e2 = VV@e + Mu_k[:,None]
-        #e2 = bsxfun(@plus, VV*e, Mu); %#' project circle back to orig space
-        #plot(e2(1,:), e2(2,:), 'Color','k');
-        #plot(e3(1,:), e3(2,:), 'Color','b');
         ax1.plot(e2[0,:], e2[1,:],c = "black",linewidth = 0.5)   
-        
-        
-    
-    utime = par_dyn.dt*np.linspace(0,N-2,N-1)#0 to N-2
+
+    utime = par_dyn.dt*np.linspace(0,N-2,N-1) # 0 to N-2
     plt.figure()
     plt.plot(utime,u_ddp[0,:],c = "blue")
     plt.plot(utime,u_ddp[1,:],c = "red")

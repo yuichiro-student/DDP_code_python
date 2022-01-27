@@ -27,17 +27,17 @@ def L_cost_quadratic_xu(x, u, x_ref, k, R, K, par_dyn, xf, grad_bool):
     n_u = par_dyn.n_u
     if not grad_bool: #no gradients No reference
         if x_ref is None:
-            L = 0.5 * np.dot(u, np.matmul(R,u)) + 0.5*np.dot((x-xf), np.matmul(K,(x-xf)))
+            L = 0.5 * np.dot(u, np.matmul(R, u)) + 0.5*np.dot((x-xf), np.matmul(K,(x-xf)))
         else:
-            L = 0.5 * np.dot(u, np.matmul(R,u)) + 0.5*np.dot((x-x_ref[:,k]), np.matmul(K,(x-x_ref[:,k])))
+            L = 0.5 * np.dot(u, np.matmul(R,u)) + 0.5*np.dot((x-x_ref[:, k]), np.matmul(K,(x-x_ref[:, k])))
         return L
     else:
-        L_u = np.matmul(R,u)
+        L_u = np.matmul(R, u)
         L_uu = R
         L_xu = np.zeros((n_x, n_u))
-        L_xx = K;
+        L_xx = K
         if x_ref is None:
             L_x = np.matmul(K,(x-xf))
         else:
-            L_x = np.matmul(K,(x-x_ref[:,k]))
-        return L_x, L_u, L_xu, L_uu, L_xx    
+            L_x = np.matmul(K,(x-x_ref[:, k]))
+        return L_x, L_u, L_xu, L_uu, L_xx

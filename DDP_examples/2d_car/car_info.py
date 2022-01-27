@@ -70,7 +70,7 @@ def graph_car(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr):
     plot_target_and_initial_pnt(x, y, par_ddp, ax1,sz)  
     if options_lagr:
         plot_obs(options_lagr, ax1)
-    plot_trj(x, y, theta, par_ddp, ax1, sz,'blue')
+    plot_trj(x, y, theta, par_ddp, ax1, sz,'blue',2)
     ax1.set_aspect('equal', 'box')
     utime = par_dyn.dt*np.linspace(0,N-2,N-1)#0 to N-2
     plt.figure()
