@@ -30,21 +30,22 @@ class par_dyn:
 def grad_dyn_quad(x,u,dyn):
     state = x
     control = u
-
+    n_x = dyn.n_x
+    n_u = dyn.n_u
     dt = dyn.dt
     m = dyn.m
     Ixx = dyn.Ixx
     Iyy = dyn.Iyy
     Izz = dyn.Izz
-    l = dyn.l
-    phi, theta, psi = state.item(0), state.item(1), state.item(2)  # roll, pitch and yaw angles in earth frame
-    phi_rate, theta_rate, psi_rate = state.item(3), state.item(4), state.item(
-        5)  # roll, pitch, yaw velocities in body frame
-    vx, vy, vz = state.item(6), state.item(7), state.item(8)  # x, y, and z linear velocities in body frame
+    g = dyn.g
+    
+    phi, theta, psi = state.item(6), state.item(7), state.item(8)  # roll, pitch and yaw angles in earth frame
+    phi_rate, theta_rate, psi_rate = state.item(9), state.item(10), state.item(11)  # roll, pitch, yaw velocities in body frame
+    vx, vy, vz = state.item(3), state.item(4), state.item(5)  # x, y, and z linear velocities in body frame
     ft = control.item(0)  # thrust in body frame
-    tau_x, tau_y, tau_z = control.item(1), control.item(2), control.item(3)  # x,y and z torques in the body frame
 
-    fx = np.eye(self.n) + self.dt * np.array([
+
+    fx = np.eye(n_x) + dt * np.array([
         [vy * (np.sin(phi) * np.sin(psi) + np.cos(phi) * np.cos(psi) * np.sin(theta)) + vz * (np.cos(phi) * np.sin(psi) - np.cos(psi) * np.sin(phi) * np.sin(theta)),
          vz * np.cos(phi) * np.cos(theta) * np.cos(psi) - vx * np.cos(psi) * np.sin(theta) + vy * np.cos(theta) * np.cos(psi) * np.sin(phi),
          vz * (np.cos(psi) * np.sin(phi) - np.cos(phi) * np.sin(theta) * np.sin(psi)) - vy * (np.cos(phi) * np.cos(psi) + np.sin(phi) * np.sin(theta) * np.sin(psi)) - vx * np.cos(theta) * np.sin(psi),
@@ -57,46 +58,29 @@ def grad_dyn_quad(x,u,dyn):
          - vx * np.cos(theta) - vz * np.cos(phi) * np.sin(theta) - vy * np.sin(
              phi) * np.sin(theta), 0, 0, 0, 0, -np.sin(theta),
          np.cos(theta) * np.sin(phi), np.cos(phi) * np.cos(theta), 0, 0, 0],
-        [0, -self.g * np.cos(theta), 0, 0, -vz, vy, 0, psi_rate, -theta_rate, 0,
-         0, 0],
-        [self.g * np.cos(phi) * np.cos(theta),
-         -self.g * np.sin(phi) * np.sin(theta), 0, vz, 0, -vx, -psi_rate, 0,
-         phi_rate, 0, 0, 0],
-        [-self.g * np.cos(theta) * np.sin(phi),
-         -self.g * np.cos(phi) * np.sin(theta), 0, -vy, vx, 0, theta_rate,
-         -phi_rate, 0, 0, 0, 0],
-        [theta_rate * np.cos(phi) * np.tan(theta) - psi_rate * np.sin(phi) * np.tan(theta),
-         psi_rate * np.cos(phi) * (np.tan(theta) ** 2 + 1) + theta_rate * np.sin(phi) * (
-                                                           np.tan(theta) ** 2 + 1), 0, 1, np.sin(phi) * np.tan(theta),
-                                               np.cos(phi) * np.tan(theta), 0, 0, 0, 0, 0, 0],
-                                              [-psi_rate * np.cos(phi) - theta_rate * np.sin(phi), 0, 0, 0, np.cos(phi),
-                                               -np.sin(phi), 0, 0, 0, 0, 0, 0],
-                                              [(theta_rate * np.cos(phi)) / np.cos(theta) - (
-                                                          psi_rate * np.sin(phi)) / np.cos(theta),
-                                               (psi_rate * np.cos(phi) * np.sin(theta)) / np.cos(theta) ** 2 + (
-                                                           theta_rate * np.sin(phi) * np.sin(theta)) / np.cos(
-                                                   theta) ** 2, 0, 0, np.sin(phi) / np.cos(theta),
-                                               np.cos(phi) / np.cos(theta), 0, 0, 0, 0, 0, 0],
-                                              [0, 0, 0, 0, (psi_rate * (self.Iy - self.Iz)) / self.Ix,
-                                               (theta_rate * (Iyy - Izz)) / self.Ix, 0, 0, 0, 0, 0, 0],
-                                              [0, 0, 0, -(psi_rate * (Ixx - Izz)) / Iyy, 0,
-                                               -(phi_rate * (Ixx - Izz)) / Iyy, 0, 0, 0, 0, 0, 0],
-                                              [0, 0, 0, (theta_rate * (Ixx - Iyy)) / self.Iz,
-                                               (phi_rate * (Ixx - Iyy)) / Izz, 0, 0, 0, 0, 0, 0, 0]
-                                              ])
+        [0, -g * np.cos(theta), 0, 0, -vz, vy, 0, psi_rate, -theta_rate, 0, 0, 0],
+        [g * np.cos(phi) * np.cos(theta),-g * np.sin(phi) * np.sin(theta), 0, vz, 0, -vx, -psi_rate, 0, phi_rate, 0, 0, 0],
+        [-g * np.cos(theta) * np.sin(phi),-g * np.cos(phi) * np.sin(theta), 0, -vy, vx, 0, theta_rate, -phi_rate, 0, 0, 0, 0],
+        [theta_rate * np.cos(phi) * np.tan(theta) - psi_rate * np.sin(phi) * np.tan(theta), psi_rate * np.cos(phi) * (np.tan(theta) ** 2 + 1) + theta_rate * np.sin(phi) * (np.tan(theta) ** 2 + 1), 0, 1, np.sin(phi) * np.tan(theta),np.cos(phi) * np.tan(theta), 0, 0, 0, 0, 0, 0],
+        [-psi_rate * np.cos(phi) - theta_rate * np.sin(phi), 0, 0, 0, np.cos(phi),-np.sin(phi), 0, 0, 0, 0, 0, 0],
+        [(theta_rate * np.cos(phi)) / np.cos(theta) - (psi_rate * np.sin(phi)) / np.cos(theta),(psi_rate * np.cos(phi) * np.sin(theta)) / np.cos(theta) ** 2 + (theta_rate * np.sin(phi) * np.sin(theta)) / np.cos(
+                                                   theta) ** 2, 0, 0, np.sin(phi) / np.cos(theta),np.cos(phi) / np.cos(theta), 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, (psi_rate * (Iyy - Izz)) / Ixx, (theta_rate * (Iyy - Izz)) / Ixx, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, -(psi_rate * (Ixx - Izz)) / Iyy, 0, -(phi_rate * (Ixx - Izz)) / Iyy, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, (theta_rate * (Ixx - Iyy)) / Izz, (phi_rate * (Ixx - Iyy)) / Izz, 0, 0, 0, 0, 0, 0, 0]])
 
-    fu = self.dt * np.array([[0., 0., 0., 0.],
+    fu = dt * np.array([[0., 0., 0., 0.],
                              [0., 0., 0., 0.],
                              [0., 0., 0., 0.],
                             [0., 0., 0., 0.],
                             [0., 0., 0., 0.],
-                            [-1 / self.mass, 0., 0., 0.]
+                            [-1 /m, 0., 0., 0.],
                              [0., 0., 0., 0.],
                              [0., 0., 0., 0.],
                              [0., 0., 0., 0.],
-                             [0., 1 / self.Ix, 0., 0.],
-                             [0., 0., 1 / self.Iy, 0.],
-                             [0., 0., 0., 1 / self.Iz]])
+                             [0., 1 / Ixx, 0., 0.],
+                             [0., 0., 1 / Iyy, 0.],
+                             [0., 0., 0., 1 / Izz]])
     return fx, fu
 
 def dyn_quad(state,control,dyn):
@@ -109,10 +93,12 @@ def dyn_quad(state,control,dyn):
     u = state[3]
     v = state[4]
     w = state[5]
-    x = state[0]
-    y = state[1]
-    z = state[2]
-
+    g = dyn.g
+    m = dyn.m
+    Ix = dyn.Ixx
+    Iy = dyn.Iyy
+    Iz = dyn.Izz
+    
     tau_x = control[0]
     tau_y = control[1]
     tau_z = control[2]
@@ -122,17 +108,17 @@ def dyn_quad(state,control,dyn):
     tau_wx, tau_wy, tau_wz = 0.0, 0.0, 0.0
 
     return state + np.array([
-        w * (sin(phi) * sin(psi) + cos(phi) * cos(psi) * sin(theta)) - v * (
-                cos(phi) * sin(psi) - cos(psi) * sin(phi) * sin(theta)) + u * (cos(psi) * cos(theta)),
-        v * (cos(phi) * cos(psi) + sin(phi) * sin(psi) * sin(theta)) - w * (
-                cos(psi) * sin(phi) - cos(phi) * sin(psi) * sin(theta)) + u * (cos(theta) * sin(psi)),
-        w * cos(phi) * cos(theta) - u * sin(theta) + v * cos(theta) * sin(phi),
-        r * v - q * w - g * sin(theta) + f_wx / m,
-        p * w - r * u + g * sin(phi) * cos(theta) + f_wy / m,
-        q * u - p * v + g * cos(theta) * cos(phi) + (f_wz - f_t) / m,
-        p + r * cos(phi) * tan(theta) + q * sin(phi) * tan(theta),
-        q * cos(phi) - r * sin(phi),
-        r * cos(phi) / cos(theta) + q * sin(phi) / cos(theta),
+        w * (np.sin(phi) * np.sin(psi) + np.cos(phi) * np.cos(psi) * np.sin(theta)) - v * (
+                np.cos(phi) * np.sin(psi) - np.cos(psi) * np.sin(phi) * np.sin(theta)) + u * (np.cos(psi) * np.cos(theta)),
+        v * (np.cos(phi) * np.cos(psi) + np.sin(phi) * np.sin(psi) * np.sin(theta)) - w * (
+                np.cos(psi) * np.sin(phi) - np.cos(phi) * np.sin(psi) * np.sin(theta)) + u * (np.cos(theta) * np.sin(psi)),
+        w * np.cos(phi) * np.cos(theta) - u * np.sin(theta) + v * np.cos(theta) * np.sin(phi),
+        r * v - q * w - g * np.sin(theta) + f_wx / m,
+        p * w - r * u + g * np.sin(phi) * np.cos(theta) + f_wy / m,
+        q * u - p * v + g * np.cos(theta) * np.cos(phi) + (f_wz - f_t) / m,
+        p + r * np.cos(phi) * np.tan(theta) + q * np.sin(phi) * np.tan(theta),
+        q * np.cos(phi) - r * np.sin(phi),
+        r * np.cos(phi) / np.cos(theta) + q * np.sin(phi) / np.cos(theta),
         (Iy - Iz) / Ix * r * q + (tau_x + tau_wx) / Ix,
         (Iz - Ix) / Iy * p * r + (tau_y + tau_wy) / Iy,
         (Ix - Iy) / Iz * p * q + (tau_z + tau_wz) / Iz,

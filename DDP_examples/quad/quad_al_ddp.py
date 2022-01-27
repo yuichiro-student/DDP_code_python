@@ -54,7 +54,7 @@ K = 0*K_final
 par_dyn = par_dyn(n_x, n_u, dt, lims, m, Ixx, Iyy, Izz, l, k, b, kd, gravity)
 f_dyn = lambda x, u: dyn_quad(x,u,par_dyn)
 grad_dyn = lambda x, u: grad_dyn_quad(x,u,par_dyn)
-L_cost = lambda x, u,k, grad_bool: L_cost_quadratic_xu(x, u, k, R, K, par_dyn, xf, grad_bool)
+L_cost = lambda x, u,k, grad_bool: L_cost_quadratic_xu(x, u, None, k, R, K, par_dyn, xf, grad_bool)
 F_cost = lambda x, grad_bool: F_cost_quadratic(x, K_final, par_dyn, xf, grad_bool)
 
 iter = 80                   #AL outer loop
@@ -120,5 +120,5 @@ x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dy
 #graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr)
 cov_noise = 0.01*np.array([[4,0,0,0],[0,4,0,0],[0,0,4,0],[0,0,0,4]])
 x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
-graph_quad_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr)
+graph_quad_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr,False)
 plt.show()

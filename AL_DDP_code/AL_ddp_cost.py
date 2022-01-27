@@ -46,7 +46,7 @@ def penalty_fun(x, u, lambda_al, mu, par_dyn, options_lagr, grad_bool):
         R = 0;
         g_con = options_lagr.g_con(x);
         for i in range(options_lagr.num_con):
-            R = R + max(lambda_al[i]+mu[i]*g_con[i],0)**2
+            R = R + mu[i]/2*max(lambda_al[i]/mu[i]+g_con[i],0)**2
         return R
     else:
         R_u = np.zeros(n_u);

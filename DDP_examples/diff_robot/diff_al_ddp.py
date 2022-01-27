@@ -32,8 +32,8 @@ rl = 0.2       #wheel radii of the robot
 
 x0 = np.zeros(n_x)  #initial state
 xf = np.array([3, 3, math.pi/2])              # desired state
-lims_u = 1/8*np.array([100, 100])
-lims_l = -1/2*np.array([100, 100])             # box Control constraints
+lims_u = 1/3*np.array([100, 100])
+lims_l = -1/3*np.array([100, 100])             # box Control constraints
 lims = np.array([lims_u, lims_l])
 R = 0.05*np.diag(np.array([0.0001, 0.0001]))  # running cost weight
 K_final = np.diag(np.array([100, 100, 100]))  # terminal cost weight
@@ -98,14 +98,14 @@ options_ddp = {'ddp_iter': ddp_iter, 'cost_tol': cost_tol, 'lambda_reg': lambda_
                'dlambda_reg': dlambda_reg, 'lambdaFactor': lambdaFactor, 'lambdaMax': lambdaMax,
                'lambdaMin': lambdaMin}
 
-u_bar = np.zeros((n_u, N-1))
-x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = \
-    ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True)
-graph_diff(x_ddp, u_ddp, par_dyn, par_ddp, None)
+u_bar = np.ones((n_u, N-1))
+#x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = \
+#    ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True)
+#graph_diff(x_ddp, u_ddp, par_dyn, par_ddp, None)
+#plt.show()
+
+x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr)
+cov_noise = 0.01*np.array([[3,0.01],[0.01, 3]])
+x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
+graph_diff_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr)
 plt.show()
-
-#x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr)
-#cov_noise = 0.01*np.array([[3,0.01],[0.01, 3]])
-#x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
-#graph_diff_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr)
-
