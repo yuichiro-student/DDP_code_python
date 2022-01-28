@@ -53,12 +53,12 @@ F_cost = lambda x, grad_bool: F_cost_quadratic(x, K_final, par_dyn, xf, grad_boo
 # None here means no reference tracking trajectory
 
 iter = 200                  #AL outer loop
-omega0 = 4                  #inner_ddp tol initial value
+omega0 = 4                 #inner_ddp tol initial value
 delta = 0.98                #inner ddp tol multiplier
 beta = 4                    #for changing mu
 gamma = 0.4                 #for constratint improvement
 mu0 = 0.1                     #initial penalty parameter
-lambda_al0 = 0.1            #initial multiplier
+lambda_al0 = 0.01            #initial multiplier
 con_satisfaction = 1e-8     #constraints satisfaction
 rad_con = np.array([1])
 center_con = np.array([[2, 2]])
@@ -98,11 +98,13 @@ u_bar = np.zeros((n_u, N-1))
 
 x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = \
     AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr, boxQP_flag = False)
-graph_diff(x_ddp, u_ddp, par_dyn, par_ddp, options_lagr)
-np.save('AL_tracking_x.npy', x_ddp)
-np.save('AL_tracking_u.npy', u_ddp)
-#cov_noise = 0.01*np.array([[3,0.01],[0.01, 3]])
-#x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
-#
+graph_diff(x_ddp, u_ddp, x_ref,par_dyn, par_ddp, options_lagr)
+plt.savefig('AL_tracking.eps', format='eps')
+#np.save('AL_tracking_x.npy', x_ddp)
+#np.save('AL_tracking_u.npy', u_ddp)
+cov_noise = 10*np.array([[1,0],[0, 1]])
+x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
+graph_diff_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr)
 plt.show()
+plt.savefig('AL_tracking_noise.eps', format='eps')
 

@@ -61,8 +61,8 @@ def plot_target_and_initial_pnt(x,y,par_ddp,ax1,sz):
     ax1.scatter(x[0], y[0], c = "blue",s = sz)
     return 0
         
-def plot_trj(x,y,theta,par_ddp,ax1,sz,line_color, line_width):
-    ax1.plot(x,y,color = line_color,linewidth = line_width)
+def plot_trj(x,y,theta,par_ddp,ax1,sz,line_color, linestyle, line_width):
+    ax1.plot(x,y,color = line_color,linewidth = line_width,linestyle = linestyle)
     ax1.scatter(par_ddp.xf[0],par_ddp.xf[1],c = "red",s = 2*sz)
     ax1.scatter(x[0], y[0], c = "blue",s = sz)
     ax1.scatter(x[-1], y[-1], c = "green",s = sz)    
@@ -79,7 +79,7 @@ def plot_obs(options_lagr,ax1):
         ax1.add_patch(circle)
     return 0
 
-def graph_diff(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr):
+def graph_diff(x_ddp,u_ddp,x_ref,par_dyn,par_ddp,options_lagr):
     N = par_ddp.N
     sz = 40
     x = x_ddp[0,:]
@@ -89,14 +89,17 @@ def graph_diff(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr):
     plot_target_and_initial_pnt(x, y, par_ddp, ax1,sz)  
     if options_lagr:
         plot_obs(options_lagr, ax1)
-    plot_trj(x, y, theta, par_ddp, ax1, sz,'blue', 2)
+    plot_trj(x, y, theta, par_ddp, ax1, sz,'blue', 'solid', 2)
+    if not x_ref.shape[0] == 0:
+        plot_trj(x_ref[0,:], x_ref[1,:], theta, par_ddp, ax1, sz,'orangered', 'dashed',2)
     ax1.set_aspect('equal', 'box')
     utime = par_dyn.dt*np.linspace(0,N-2,N-1)#0 to N-2
-    plt.figure()
-    plt.plot(utime,u_ddp[0,:],c = "blue")
-    plt.plot(utime,u_ddp[1,:],c = "red")
-    plt.xlabel("Time[s]")
-    plt.ylabel("control[rad/s]")
+    
+    #plt.figure()
+    #plt.plot(utime,u_ddp[0,:],c = "blue")
+    #plt.plot(utime,u_ddp[1,:],c = "red")
+    #plt.xlabel("Time[s]")
+    #plt.ylabel("control[rad/s]")
     return 0
     
 def graph_diff_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr):
@@ -114,8 +117,8 @@ def graph_diff_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr):
         x = x_noise[0,:,i]
         y = x_noise[1,:,i]
         theta = x_noise[2,:,i]
-        plot_trj(x, y, theta, par_ddp, ax1, sz,'red',0.5)
-    plot_trj(x_ref, y_ref, theta_ref, par_ddp, ax1, sz,'blue',2)
+        plot_trj(x, y, theta, par_ddp, ax1, sz,'red','solid',0.5)
+    plot_trj(x_ref, y_ref, theta_ref, par_ddp, ax1, sz,'blue','solid',2)
     ax1.set_aspect('equal', 'box')
     
     STD = 3 #scaling paramter of normal standard div
@@ -139,11 +142,11 @@ def graph_diff_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr):
         ax1.plot(e2[0,:], e2[1,:],c = "black",linewidth = 0.5)   
 
     utime = par_dyn.dt*np.linspace(0,N-2,N-1) # 0 to N-2
-    plt.figure()
-    plt.plot(utime,u_ddp[0,:],c = "blue")
-    plt.plot(utime,u_ddp[1,:],c = "red")
-    plt.xlabel("Time[s]")
-    plt.ylabel("control[rad/s]")
+    #plt.figure()
+    #plt.plot(utime,u_ddp[0,:],c = "blue")
+    #plt.plot(utime,u_ddp[1,:],c = "red")
+    #plt.xlabel("Time[s]")
+    #plt.ylabel("control[rad/s]")
     return 0
     
     
