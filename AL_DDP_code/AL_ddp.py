@@ -38,7 +38,7 @@ def evaluate_actual_cost_constraints(x_traj, u_traj,g_con,par_ddp):
 #evaluates actual cost along trajectories
     J = 0;
     for k in range(par_ddp.N-1):#0 to N-2
-        J = J + par_ddp.L_cost(x_traj[:, k], u_traj[:, k], k,False);
+        J = J + par_ddp.L_cost(x_traj[:, k], u_traj[:, k], k, False);
     J = J + par_ddp.F_cost(x_traj[:, -1], False);
     return G, J
 
@@ -81,6 +81,7 @@ def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr, boxQP_flag = True):
 
 #augmented lagrangian with ddp
     for j in range(options_lagr.iter):
+        print(options_lagr.iter)
         print('Outer iteration %d ----------------------------------------------' % (j))
         #update cost functions for DDP
         par_ddp_inner.L_cost = lambda x, u,k,grad_bool: total_penalty_cost_L(par_ddp.L_cost, pen_fun,
@@ -92,22 +93,24 @@ def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr, boxQP_flag = True):
         print('DDP on penalty terms:')
         x_ddp, u_ddp, S_ddp, _, _, _, norm_costgrad = ddp_ctrl_constrained(u_bar, par_ddp_inner, par_dyn, options_ddp_inner, boxQP_flag)
         print('----------------------------')
-        G_con, J_actual = evaluate_actual_cost_constraints(x_ddp,u_ddp,g_con,par_ddp)
+        print("norm costgrad")
+        print(norm_costgrad)
+        G_con, J_actual = evaluate_actual_cost_constraints(x_ddp, u_ddp, g_con, par_ddp)
         G_con_max = G_con.max()
         print('Actual cost after DDP: %f, Max constraint: %f\n' % (J_actual, G_con_max))
         #check convergence criteria
         if G_con_max <= options_lagr.con_satisfaction and norm_costgrad <= options_ddp['cost_tol']:
-            if j>4:
+            if j > 4:
                 print('norm_grad %f' % norm_costgrad);
                 print('options_ddp.convtol_star %f' % (options_ddp["cost_tol"]));
                 print('options_ddp_inner.convtol_star %f' % (options_ddp_inner["cost_tol"]));
                 print('Convergence of augmented Lagrangian');
-                cost_out[j] = J_actual;
+                cost_out[j] = J_actual
                 g_out[j] = G_con_max
-            break
+                break
         
         # update multipliers and penalty terms
-        ind_constraintviolation =  G_con > options_lagr.con_satisfaction
+        ind_constraintviolation = G_con > options_lagr.con_satisfaction
         lambda_al = update_multipliers(lambda_al, mu, G_con)
         lambda_al = np.maximum(lambda_al, options_lagr.min_lambda_al * np.ones(lambda_al.shape));
     

@@ -20,8 +20,8 @@ from ddp_ctrl_constrained import par_ddp, ddp_ctrl_constrained
 
 
 # initialize system parameters
-dt = 0.02
-N = 100
+dt = 0.03
+N = 60
 
 n_x = 3         #number of states
 n_u = 2         #number of controls
@@ -30,12 +30,13 @@ d = 0.2        #tread of the robot
 rr = 0.2       #wheel radii of the robot
 rl = 0.2       #wheel radii of the robot
 
-x0 = np.zeros(n_x)  #initial state
-xf = np.array([3, 3, math.pi/2])              # desired state
-lims_u = 1/3*np.array([100, 100])
-lims_l = -1/3*np.array([100, 100])             # box Control constraints
+x0 = np.array([0, 0, math.pi/2])  #initial state
+xf = np.array([3, 3, 0])              # desired state
+lims_u = 1/2*np.array([100, 100])
+lims_l = -1/2*np.array([100, 100])             # box Control constraints
 lims = np.array([lims_u, lims_l])
-R = 0.05*np.diag(np.array([0.0001, 0.0001]))  # running cost weight
+lims = np.array([])
+R = 0.5*np.diag(np.array([0.0001, 0.0001]))  # running cost weight
 K_final = np.diag(np.array([100, 100, 100]))  # terminal cost weight
 K = 0*np.diag(np.array([100, 100, 100]))
 
@@ -53,17 +54,17 @@ F_cost = lambda x, grad_bool: F_cost_quadratic(x, K_final, par_dyn, xf, grad_boo
 
 
 iter = 80                   #AL outer loop
-omega0 = 4                  #inner_ddp tol initial value
+omega0 = 4                 #inner_ddp tol initial value
 delta = 0.98                #inner ddp tol multiplier
 beta = 4                    #for changing mu
 gamma = 0.4                 #for constratint improvement
 mu0 = 0.1                     #initial penalty parameter
-lambda_al0 = 0.1            #initial multiplier
+lambda_al0 = 0.01            #initial multiplier
 con_satisfaction = 1e-6     #constraints satisfaction
 rad_con = np.array([0.5,0.5,0.5])
-center_con = np.array([[1,1],[1,2.5],[2.5,2]])
+center_con = np.array([[1.0,1.0],[1.0,2.5],[2.5,2.0]])
 num_con = len(rad_con)
-min_lambda_al = 1e-15
+min_lambda_al = 1e-19
 mu_max = 1e8
 
 # constratins
@@ -98,7 +99,7 @@ options_ddp = {'ddp_iter': ddp_iter, 'cost_tol': cost_tol, 'lambda_reg': lambda_
                'dlambda_reg': dlambda_reg, 'lambdaFactor': lambdaFactor, 'lambdaMax': lambdaMax,
                'lambdaMin': lambdaMin}
 
-u_bar = np.ones((n_u, N-1))
+u_bar = np.zeros((n_u, N-1))
 #x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = \
 #    ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True)
 #graph_diff(x_ddp, u_ddp, par_dyn, par_ddp, None)

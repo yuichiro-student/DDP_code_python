@@ -15,12 +15,12 @@ from ddp_cost import F_cost_quadratic, L_cost_quadratic_xu
 from quad_simple_info import par_dyn, grad_dyn_quad, dyn_quad, graph_quad,graph_quad_with_noise
 from AL_ddp import options_lagr, AL_ddp
 from realization_with_noise import realization_with_noise
-from ddp_ctrl_constrained import par_ddp,ddp_ctrl_constrained
+from ddp_ctrl_constrained import par_ddp, ddp_ctrl_constrained
 import matplotlib.pyplot as plt
 
 # initialize system parameters
-dt = 0.02
-N = 80
+dt = 0.01
+N = 500
 
 n_x = 12         #number of states
 n_u = 4         #number of controls
@@ -32,24 +32,27 @@ m = 1.0
 
 
 x0 = np.zeros(n_x)  #initial state
-xf = np.array([5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0])   #desired state
-lims_u = 4*np.ones(n_u)
+x0 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0])  #initial state
+xf = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, -4, -2, 1])   #desired state
+lims_u = 10*np.ones(n_u)
 lims_l = 0*np.ones(n_u) #box xontrol constraints
 #lims = np.array([lims_u, lims_l])
 lims = np.array([])
-R =  0.0001*np.diag(np.ones(n_u)) #running cost weight
-cost_a, cost_b = 150,50
+R = 0.05*np.diag(np.ones(n_u)) #running cost weight
+cost_a, cost_b = 100,50
 ones = np.ones(3)
-K_final_diag = np.concatenate((cost_a*ones, cost_b*ones, cost_b*ones,cost_b*ones),axis =0 )
+K_final_diag = np.concatenate((cost_b*ones, cost_b*ones, cost_b*ones,cost_a*ones),axis =0 )
 K_final = np.diag(K_final_diag)  #terminal cost weight
-K = 0.01*K_final
+cost_a_run, cost_b_run = 0.1, 0.01
+K_diag = np.concatenate((cost_b_run*ones, cost_b_run*ones, cost_b_run*ones,cost_a_run*ones),axis =0 )
+K = np.diag(K_diag)
 
 
 
 par_dyn = par_dyn(n_x, n_u, dt, lims, m, Ixx, Iyy, Izz, gravity)
 f_dyn = lambda x, u: dyn_quad(x,u,par_dyn)
 grad_dyn = lambda x, u: grad_dyn_quad(x,u,par_dyn)
-L_cost = lambda x, u,k, grad_bool: L_cost_quadratic_xu(x, u, None,k, R, K, par_dyn, xf, grad_bool)
+L_cost = lambda x, u,k, grad_bool: L_cost_quadratic_xu(x, u, None, k, R, K, par_dyn, xf, grad_bool)
 F_cost = lambda x, grad_bool: F_cost_quadratic(x, K_final, par_dyn, xf, grad_bool)
 
 iter = 80                   #AL outer loop
@@ -81,7 +84,7 @@ grad_g = np.array([[-2*(x[0]-center_con[0,0]), -2*(x[1] - center_con[0,1]), -2*(
 
 grad_g = np.concatenate((grad_g, np.zeros((3,9))),axis = 1)
 
-hess = np.block([[-2*np.eye(3),   np.zeros((3, 9))],[np.ones((9, 3)), np.zeros((9,9))]])    
+hess = np.block([[-2*np.eye(3),   np.zeros((3, 9))],[np.ones((9, 3)), np.zeros((9,9))]])
 hess_g = np.repeat(hess[:, :, np.newaxis], 3, axis=2)
 
 g_con = lambdify([x],g,"numpy")
@@ -96,7 +99,7 @@ options_lagr = options_lagr(iter,omega0,beta,gamma,delta,mu0,lambda_al0,con_sati
 #options for DDP
 ddp_iter = 100;          #number of max iterations
 cost_tol = 1e-3;         #cost change 1e-3
-lambda_reg = 1;          #initial value for lambda
+lambda_reg = 0.01;          #initial value for lambda
 dlambda_reg = 1;         #initial value for dlambda
 lambdaFactor = 1.6;      #lambda scaling factor
 lambdaMax = 1e10;        #lambda maximum value

@@ -33,7 +33,7 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
     iter = options_ddp['ddp_iter']
     n_X = len(x_k)
     x = np.zeros((n_X,N))
-    x[:,0] = x_k
+    x[:, 0] = x_k
     c_L = 0
     for k in range(N-1):
         u_k = u_bar[:, k].copy()
@@ -41,13 +41,14 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
         x_k = par_ddp.f_dyn(x_k, u_k)
         x[:, k + 1] = x_k
 
-    x_final = x[:,-1].copy()
+    x_final = x[:, -1].copy()
     c_F = par_ddp.F_cost(x_final, False)
     cost_traj0 = c_L + c_F  #total cost of nominal sequence
     x_bar = x.copy()
     J = np.zeros(iter)
     u_bars = np.zeros((n_u, N-1,iter))
     x_bars = np.zeros((n_X, N,iter))
+    K_out = np.zeros((n_u, n_X, N-1))
     lims = par_dyn.lims
     dV = np.array([0, 0])
     lambda_reg = options_ddp['lambda_reg']
@@ -68,23 +69,21 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
         backPassDone = 0
         while not backPassDone:
             V_x_kplus1, V_xx_kplus1 = par_ddp.F_cost(x_final, True)
-            k_out = np.zeros((n_u,N-1))
-            K_out = np.zeros((n_u, n_X, N-1))
-
+            k_in = np.zeros((n_u, N-1))
+            K_in = np.zeros((n_u, n_X, N-1))
 
             for k in range(N-2, -1,-1):#N-2 to 0
-                x_bar_k = x_bar[:,k].copy()
-                u_bar_k = u_bar[:,k].copy()
+                x_bar_k = x_bar[:, k].copy()
+                u_bar_k = u_bar[:, k].copy()
 
                 Fi, B = par_ddp.grad_dyn(x_bar_k, u_bar_k)
                 L_x, L_u, L_xu, L_uu, L_xx = par_ddp.L_cost(x_bar_k, u_bar_k, k, True)
 
-                Qx = L_x + np.matmul(Fi.T,V_x_kplus1) #n_x array
-                Qu = L_u + np.matmul(B.T,V_x_kplus1)  #n_u array
-                Qxx = L_xx + np.matmul(Fi.T, np.matmul(V_xx_kplus1,Fi))
-                Qxu = L_xu + np.matmul(Fi.T, np.matmul(V_xx_kplus1,B))
-                Quu = L_uu + np.matmul(B.T, np.matmul(V_xx_kplus1,B))
-
+                Qx = L_x + np.matmul(Fi.T, V_x_kplus1) #n_x array
+                Qu = L_u + np.matmul(B.T, V_x_kplus1)  #n_u array
+                Qxx = L_xx + np.matmul(Fi.T, np.matmul(V_xx_kplus1, Fi))
+                Qxu = L_xu + np.matmul(Fi.T, np.matmul(V_xx_kplus1, B))
+                Quu = L_uu + np.matmul(B.T, np.matmul(V_xx_kplus1, B))
 
                 #if isfield(par_ddp, 'hess_dyn')
                 #    [fxx,fxu,fuu] = par_ddp.hess_dyn(x_bar(:,k), u_bar(:,k));
@@ -110,13 +109,13 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
                     break
                 if (not lims.size == 0) and (boxQP_flag == True):
                     # box constraint QP
-                    upper = lims[0, :] - u_bar_k;
-                    lower = lims[1, :] - u_bar_k;
+                    upper = lims[0, :] - u_bar_k
+                    lower = lims[1, :] - u_bar_k
 
-                    x0_guess = k_out[:, min(k+1,N-2)]
+                    x0_guess = k_in[:, min(k+1,N-2)]
                     k_k, result, Hf, free, trace = boxQP(Quu_reg, Qu,lower, upper, x0_guess)
                     #l_ans,result,Hf,free = boxQP(Quu_reg,Qu,lower,upper,l(:,min(k+1,N-2)));
-                    K_k    = np.zeros((n_u, n_X))
+                    K_k = np.zeros((n_u, n_X))
                     if any(free) and result > 1:
                         #Lfree = -Hf\(Hf'\Qux(free,:));
                         Lfree = -np.linalg.solve(Hf,np.linalg.solve(Hf.T, Qux[free,:]))
@@ -125,8 +124,8 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
                    k_k = -np.linalg.solve(Quu_reg, Qu) #Quu_reg^(-1)*Qu, n_u array
                    K_k = -np.linalg.solve(Quu_reg, Qux)  #Quu_reg^(-1)*Qux
 
-                K_out[:, :, k] = K_k
-                k_out[:, k] = k_k
+                K_in[:, :, k] = K_k
+                k_in[:, k] = k_k
 
                 dV = dV + np.array([np.dot(k_k, Qu), 0.5*np.dot(k_k, Quu@k_k)])
                 V_x_kplus1 = Qx + K_k.T@Quu@k_k + K_k.T@Qu + Qxu@k_k
@@ -137,13 +136,14 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
                     backPassDone = 1
 
     # check for termination due to small gradient
-        tmp = (abs(k_out) / (abs(u_bar)+1))
+        tmp = (abs(k_in) / (abs(u_bar)+1))
         g_norm = np.mean(tmp.max(0))
         # g_norm         = mean(max(abs(l) / (abs(u_bar)+1),[],1));
         if g_norm < 1e-4 and lambda_reg < 1e-5:
             print('SUCCESS: gradient norm < tolGrad')
             norm_costgrad = 0
-            x = x_bar; u = u_bar
+            x = x_bar
+            u = u_bar
             break
 
     #forward
@@ -152,62 +152,61 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
             x = np.zeros((n_X,N))
             alpha0 = 10**np.linspace(0,-3,11)
             for alpha in alpha0:
-                    x_k = par_ddp.x0
-                    x[:, 0] = x_k
-                    deltax_k = np.zeros(n_X)
-                    u = np.zeros((n_u, N - 1))
-                    c_L = 0
-                    for k in range(N-1):#0 to N-2
-                        deltau_k = alpha*k_out[:, k] + np.matmul(K_out[:, :, k], deltax_k)
-                        u_k = u_bar[:, k] + deltau_k
-                        if not (lims.size == 0): # clamp control
-                            u_k = np.minimum(lims[0,:], np.maximum(lims[1,:], u_k))
+                x_k = par_ddp.x0
+                x[:, 0] = x_k
+                deltax_k = np.zeros(n_X)
+                u = np.zeros((n_u, N - 1))
+                c_L = 0
+                for k in range(N-1):#0 to N-2
+                    deltau_k = alpha*k_in[:, k] + np.matmul(K_in[:, :, k], deltax_k)
+                    u_k = u_bar[:, k] + deltau_k
+                    if not (lims.size == 0): # clamp control
+                        u_k = np.minimum(lims[0, :], np.maximum(lims[1, :], u_k))
 
-                        c_L = c_L + par_ddp.L_cost(x_k, u_k, k, False)
-                        u[:, k] = u_k
-                        x_k = par_ddp.f_dyn(x_k, u_k)
+                    c_L = c_L + par_ddp.L_cost(x_k, u_k, k, False)
+                    u[:, k] = u_k
+                    x_k = par_ddp.f_dyn(x_k, u_k)
+                    if np.isinf(x).any() or np.isinf(c_L) or np.isnan(x).any():
+                        print('INF state')
+                    x[:, k + 1] = x_k
+                    deltax_k = x[:, k+1] - x_bar[:, k+1]
 
-                        if np.isinf(x).any() or np.isinf(c_L) or np.isnan(x).any():
-                            print('INF state\n')
-                            break
-                        x[:,k + 1] = x_k
-                        deltax_k = x[:,k + 1] - x_bar[:,k + 1]
+                x_final = x[:, -1].copy()
+                c_F = par_ddp.F_cost(x_final, False)
+                cost_traj1 = c_L + c_F
+                dcost = cost_traj0-cost_traj1
+                expected = -alpha*(dV[0] + alpha*dV[1])
+                if expected > 0:
+                    z = dcost/expected
+                else:
+                    z = np.sign(dcost)
+                    warnings.warn("Warning...........Message")
 
-                    x_final = x[:, -1].copy()
-                    c_F = par_ddp.F_cost(x_final, False)
-                    cost_traj1 = c_L + c_F
-                    dcost = cost_traj0-cost_traj1
-                    expected = -alpha*(dV[0] + alpha*dV[1])
-                    if expected > 0:
-                        z = dcost/expected
-                    else:
-                        z = np.sign(dcost)
-                        warnings.warn("Warning...........Message")
-
-                    if (z > 0):
-                        fwdPassDone = 1
-                        break
+                if (z > 0):
+                    fwdPassDone = 1
+                    break
  # decide accept or reject
         if fwdPassDone:
         #decrease lambda
-            dlambda_reg   = min(dlambda_reg / lambdaFactor, 1/lambdaFactor);
-            lambda_reg    = lambda_reg * dlambda_reg * (lambda_reg > lambdaMin);
+            dlambda_reg = min(dlambda_reg / lambdaFactor, 1/lambdaFactor);
+            lambda_reg = lambda_reg * dlambda_reg * (lambda_reg > lambdaMin);
             conv_flag = 0;
             if dcost < options_ddp['cost_tol']:
                 conv_flag = 1
 
-            cost_traj0 = cost_traj1;
-            x_bar = x; u_bar = u;
-            norm_costgrad = abs(cost_traj1-cost_traj0) / cost_traj0;
-            #YUICHIRO
-            norm_costgrad = dcost;
+            cost_traj0 = cost_traj1
+            x_bar = x.copy()
+            u_bar = u.copy()
+            K_out = K_in.copy()
+            norm_costgrad = abs(cost_traj1-cost_traj0) / cost_traj0
             #
+            norm_costgrad = dcost
             if conv_flag:
-                print('convergence of DDP dcost: %.3f\n' % (dcost));
+                print('convergence of DDP dcost: %.3f\n' % (dcost))
                 break
         else:
-            dlambda_reg   = max(dlambda_reg * lambdaFactor, lambdaFactor);
-            lambda_reg    = max(lambda_reg * dlambda_reg, lambdaMin);
+            dlambda_reg = max(dlambda_reg * lambdaFactor, lambdaFactor);
+            lambda_reg = max(lambda_reg * dlambda_reg, lambdaMin);
             print('Not enough cost reduction make lambda larger,lambda:%2f' % (lambda_reg))
             if lambda_reg > lambdaMax:
                 norm_costgrad = 0

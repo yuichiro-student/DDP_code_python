@@ -21,7 +21,7 @@ from ddp_ctrl_constrained import par_ddp, ddp_ctrl_constrained
 
 # initialize system parameters
 dt = 0.02
-N = 500
+N = 100
 
 n_x = 3         #number of states
 n_u = 2         #number of controls
@@ -32,12 +32,12 @@ rl = 0.2       #wheel radii of the robot
 
 #x0 = np.zeros(n_x)
 #xf = np.array([-2.5494, -1.5814,0])
-lims_u = np.array([5, 5])
-lims_l = -1*np.array([5, 5])             # box Control constraints
+lims_u = 5*np.array([5, 5])
+lims_l = -5*np.array([5, 5])             # box Control constraints
 lims = np.array([lims_u, lims_l])
-R = 0.5*np.diag(np.array([1e-2, 1e-2]))  # running cost weight
-K_final = np.diag(np.array([10, 10, 10]))  # terminal cost weight
-K = K_final
+R = np.diag(np.array([1e-3, 1e-3]))  # running cost weight
+K_final = np.diag(np.array([100, 100, 100]))  # terminal cost weight
+K = K_final/10
 
 x_ref = np.load('vanilla_ddp_x_star.npy')
 x0 = x_ref[:, 0].copy()     #initial state

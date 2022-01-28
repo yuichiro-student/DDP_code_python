@@ -19,8 +19,8 @@ from ddp_ctrl_constrained import par_ddp,ddp_ctrl_constrained
 import matplotlib.pyplot as plt
 
 # initialize system parameters
-dt = 0.02
-N = 80
+dt = 0.01
+N = 200
 
 n_x = 12         #number of states
 n_u = 4         #number of controls
@@ -36,12 +36,12 @@ kd  = 0.25;            # [Ns/m]
 gravity   = 9.8;             # [m/s^2]  acceleration of gravity
 
 
-x0 = np.zeros(n_x)  #initial state
-xf = np.array([5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0])   #desired state
+x0 = np.array([0.0, -2.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])  #initial state
+xf = np.array([1.0, 4.0, 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0])   #desired state
 lims_u = 4*np.ones(n_u)
 lims_l = 0*np.ones(n_u) #box xontrol constraints
 lims = np.array([lims_u, lims_l])
-#lims = np.array([])
+lims = np.array([])
 R =  0.0001*np.diag(np.ones(n_u)) #running cost weight
 cost_a, cost_b = 150,50
 ones = np.ones(3)
@@ -114,11 +114,11 @@ options_ddp = {'ddp_iter': ddp_iter, 'cost_tol': cost_tol, 'lambda_reg': lambda_
 
 
 u_bar = np.ones((n_u,N-1))*m*gravity/4
-#x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = ddp_ctrl_constrained(u_bar,par_ddp,par_dyn,options_ddp)
-#graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,[])
-x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr)
+x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = ddp_ctrl_constrained(u_bar,par_ddp,par_dyn,options_ddp)
+graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,[])
+#x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr)
 #graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr)
-cov_noise = 0.01*np.array([[4,0,0,0],[0,4,0,0],[0,0,4,0],[0,0,0,4]])
-x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
-graph_quad_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr,False)
+#cov_noise = 0.01*np.array([[4,0,0,0],[0,4,0,0],[0,0,4,0],[0,0,0,4]])
+#x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
+#graph_quad_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr,False)
 plt.show()
