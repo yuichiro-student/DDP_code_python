@@ -107,6 +107,7 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
                     lambda_reg = max(lambda_reg * dlambda_reg, lambdaMin)
                     print('Quu ndf at %d with minimun eig.: %6f lambda: %6f' % (k, min_eig, lambda_reg))
                     break
+                '''    
                 if (not lims.size == 0) and (boxQP_flag == True):
                     # box constraint QP
                     upper = lims[0, :] - u_bar_k
@@ -123,9 +124,12 @@ def ddp_ctrl_constrained(u_bar, par_ddp, par_dyn, options_ddp, boxQP_flag = True
                 else:
                    k_k = -np.linalg.solve(Quu_reg, Qu) #Quu_reg^(-1)*Qu, n_u array
                    K_k = -np.linalg.solve(Quu_reg, Qux)  #Quu_reg^(-1)*Qux
+                '''
+                k_k = -np.linalg.solve(Quu_reg, Qu)  # Quu_reg^(-1)*Qu, n_u array
+                K_k = -np.linalg.solve(Quu_reg, Qux)  # Quu_reg^(-1)*Qux
 
-                K_in[:, :, k] = K_k
-                k_in[:, k] = k_k
+                K_in[:, :, k] = K_k.copy()
+                k_in[:, k] = k_k.copy()
 
                 dV = dV + np.array([np.dot(k_k, Qu), 0.5*np.dot(k_k, Quu@k_k)])
                 V_x_kplus1 = Qx + K_k.T@Quu@k_k + K_k.T@Qu + Qxu@k_k

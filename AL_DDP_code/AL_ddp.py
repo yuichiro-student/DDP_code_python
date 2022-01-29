@@ -91,7 +91,7 @@ def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr, boxQP_flag = True):
 
     #solve unconstrained penalty problem
         print('DDP on penalty terms:')
-        x_ddp, u_ddp, S_ddp, _, _, _, norm_costgrad = ddp_ctrl_constrained(u_bar, par_ddp_inner, par_dyn, options_ddp_inner, boxQP_flag)
+        x_ddp, u_ddp, S_ddp_in, _, _, _, norm_costgrad = ddp_ctrl_constrained(u_bar, par_ddp_inner, par_dyn, options_ddp_inner, boxQP_flag)
         print('----------------------------')
         print("norm costgrad")
         print(norm_costgrad)
@@ -107,6 +107,7 @@ def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr, boxQP_flag = True):
                 print('Convergence of augmented Lagrangian');
                 cost_out[j] = J_actual
                 g_out[j] = G_con_max
+                S_ddp = S_ddp_in.copy()
                 break
         
         # update multipliers and penalty terms
@@ -128,6 +129,7 @@ def AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr, boxQP_flag = True):
         print(j)
         u_bar = u_ddp;
         x_bar = x_ddp;
+        S_ddp = S_ddp_in.copy()
         u_bars[:,:,j+1] = u_bar.copy()
         x_bars[:,:,j+1] = x_bar.copy()
         cost_out[j+1] = J_actual;

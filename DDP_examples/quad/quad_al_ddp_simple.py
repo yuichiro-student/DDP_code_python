@@ -32,8 +32,12 @@ m = 1.0
 
 
 x0 = np.zeros(n_x)  #initial state
-x0 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0])  #initial state
-xf = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, -4, -2, 1])   #desired state
+#x0 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 0])  #initial state
+#xf = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, -4, -2, 1])   #desired state
+
+x0 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3])  #initial state
+xf = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])   #desired state
+
 lims_u = 10*np.ones(n_u)
 lims_l = 0*np.ones(n_u) #box xontrol constraints
 #lims = np.array([lims_u, lims_l])
@@ -112,10 +116,10 @@ options_ddp = {'ddp_iter': ddp_iter, 'cost_tol': cost_tol, 'lambda_reg': lambda_
 
 u_bar = np.zeros((n_u,N-1))
 
-x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = ddp_ctrl_constrained(u_bar,par_ddp,par_dyn,options_ddp)
-graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,[])
-#x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr)
-#graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr)
+#x_ddp, u_ddp, K_out, u_bars, x_bars, J, norm_costgrad = ddp_ctrl_constrained(u_bar,par_ddp,par_dyn,options_ddp)
+#graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,[])
+x_ddp, u_ddp, K_ddp, u_bars, x_bars,cost_out,g_out = AL_ddp(u_bar,par_ddp,par_dyn,options_ddp,options_lagr)
+graph_quad(x_ddp,u_ddp,par_dyn,par_ddp,options_lagr)
 #cov_noise = 0.01*np.array([[4,0,0,0],[0,4,0,0],[0,0,4,0],[0,0,0,4]])
 #x_noise, u_noise = realization_with_noise(x_ddp, u_ddp, K_ddp, par_dyn, par_ddp, options_lagr,cov_noise, num_samples = 100)
 #graph_quad_with_noise(x_ddp,u_ddp,x_noise,par_dyn,par_ddp,options_lagr)

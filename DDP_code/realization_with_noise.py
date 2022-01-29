@@ -13,21 +13,30 @@ def realization_with_noise(x_star,u_star,K,par_dyn,par_ddp,options_lagr,cov_nois
     # cov_noise: noise covariance matrix
     x_out = np.zeros([par_dyn.n_x, par_ddp.N, num_samples])
     u_out = np.zeros([par_dyn.n_u, par_ddp.N-1, num_samples])
+
+    if not par_dyn.lims.size == 0:
+        clamp_flag = True
+        lims = par_dyn.lims
+    else:
+        clamp_flag = False
+
     num_violation = 0
     for i in range(num_samples):
         zero_mean = np.zeros(par_dyn.n_u)
         u_dist = u_star + np.random.multivariate_normal(zero_mean, cov_noise, par_ddp.N-1).T
-        u_out[:,:,i] = u_dist.copy()
+        u_out[:, :, i] = u_dist.copy()
         x_k = par_ddp.x0
-        x_out[:,0,i] = x_k.copy()
+        x_out[:, 0, i] = x_k.copy()
         for k in range(par_ddp.N-1):
-            u_dist_k = u_dist[:,k].copy();
-            u_k = u_dist_k + K[:,:,k]@(x_k- x_star[:,k])
+            u_dist_k = u_dist[:,k].copy()
+            u_k = u_dist_k + K[:, :, k]@(x_k - x_star[:,k])
+            if clamp_flag:
+                u_k = np.minimum(lims[0, :], np.maximum(lims[1, :], u_k))
             x_k = par_ddp.f_dyn(x_k, u_k);
-            x_out[:,k+1,i] = x_k;
+            x_out[:, k+1, i] = x_k.copy()
         #check constraint vilation
         G_con = np.asarray(options_lagr.g_con(x_out[:,:,i]))
-        G_con_max =  G_con.max()
+        G_con_max = G_con.max()
         if G_con_max>0:
             num_violation = num_violation +1
     print("Number of failed trajectory: %d" % (num_violation))        

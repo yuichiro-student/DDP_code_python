@@ -59,7 +59,7 @@ def penalty_fun(x, u, lambda_al, mu, par_dyn, options_lagr, grad_bool):
         hess_g_con = np.asarray(options_lagr.hess_g_con(x));
         for i in range(options_lagr.num_con):
             val = lambda_al[i]+mu[i]*g_con[i]
-            R_x = R_x + max(val,0) * grad_g_con[i,:];
+            R_x = R_x + max(val,0) * grad_g_con[i,:]
             if val > 0:
                 R_xx = R_xx + mu[i] * np.matmul(grad_g_con[i,:].T,grad_g_con[i,:]) + val * hess_g_con[:,:,i];
     return R_x, R_u, R_xu, R_uu, R_xx    
